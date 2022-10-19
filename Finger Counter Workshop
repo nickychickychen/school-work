@@ -1,0 +1,216 @@
+import cv2
+import time
+import mediapipe as mp
+
+mp_drawing = mp.solutions.drawing_utils
+mp_hands = mp.solutions.hands
+
+new_frame_time = 0
+prev_frame_time = 0
+
+cap = cv2.VideoCapture(1) #opens INSIDE camera on a laptop. change this to 0 if there is only one camera
+
+with mp_hands.Hands(
+        min_detection_confidence=0.5,  #range from 0-1 that indicates how confident the model is detecting hands
+        min_tracking_confidence=0.5,   #range from 0-1 indicating how confident the model is detecting landmarks(see pic)
+        max_num_hands=2) as hands:
+    while cap.isOpened():               #while camera is open
+
+        success, image = cap.read() #note 1
+        if not success:     #just a debug print. not required
+            print("Skipping empty frame !")
+            continue
+
+        image = cv2.flip(image, 1)  #since we're using input from the inside camera, it will be mirrored
+
+        results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))     #changes the color scheme (see note 2)
+
+        hand = str(results.multi_handedness)    #checking with hand is up with mediapipe
+
+        if 'Right' in hand:             #just storing which hand is up
+            whathand = 'Hand : Right'
+        elif 'Left' in hand:
+            whathand = 'Hand : Left'
+        else:
+            whathand = 'Hand : -'
+
+        image.flags.writeable = True        #lets you write over the image w/lines and stuff
+        imageHeight, imageWidth, _ = image.shape
+
+        gesture = 'Gesture : -'
+
+        if results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                # using mediapipe to draw finger landmarks. recall image from before
+                mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+                                          # Landmark (red dot)
+                                          mp_drawing.DrawingSpec(color=(16, 31, 235), thickness=4, circle_radius=3, ),
+                                          # Landmark Connections (green line)
+                                          mp_drawing.DrawingSpec(color=(52, 235, 155), thickness=2))
+
+                #NOTE3 (link to deeper explanation)
+                #basically mapping and plotting all the finger landmarks (roughly the joint connections)
+
+                # thumb tip (roughly same height as the other LOWEST joints)
+                normalizedLandmark = hand_landmarks.landmark[4]
+                # converts the normalized landmark location to x,y coordinates
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                #makes a tuple of the coordinates(see note 4)
+                Thumb_Tip_x = pixelCoordinatesLandmark[0]
+                Thumb_Tip_y = pixelCoordinatesLandmark[1]
+
+                #pointer finger lowest joint
+                normalizedLandmark = hand_landmarks.landmark[6]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+
+                Index_Pip_x = pixelCoordinatesLandmark[0]
+                Index_Pip_y = pixelCoordinatesLandmark[1]
+
+                #middle finger lowest joint
+                normalizedLandmark = hand_landmarks.landmark[10]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Middle_Pip_x = pixelCoordinatesLandmark[0]
+                Middle_Pip_y = pixelCoordinatesLandmark[1]
+
+                #ring finger lowest joint
+                normalizedLandmark = hand_landmarks.landmark[14]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Ring_Pip_x = pixelCoordinatesLandmark[0]
+                Ring_Pip_y = pixelCoordinatesLandmark[1]
+
+                #pinky finger lowest joint
+                normalizedLandmark = hand_landmarks.landmark[18]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Pinky_Pip_x = pixelCoordinatesLandmark[0]
+                Pinky_Pip_y = pixelCoordinatesLandmark[1]
+
+                # ------------------------------------------------------------------------------------------------------
+
+                #pointer finger palm connection
+                normalizedLandmark = hand_landmarks.landmark[5]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Index_Mcp_x = pixelCoordinatesLandmark[0]
+                Index_Mcp_y = pixelCoordinatesLandmark[1]
+
+                # middle finger palm connection
+                normalizedLandmark = hand_landmarks.landmark[9]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Middle_Mcp_x = pixelCoordinatesLandmark[0]
+                Middle_Mcp_y = pixelCoordinatesLandmark[1]
+
+                # ring finger palm connection
+                normalizedLandmark = hand_landmarks.landmark[13]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Ring_Mcp_x = pixelCoordinatesLandmark[0]
+                Ring_Mcp_y = pixelCoordinatesLandmark[1]
+
+                # pinky finger palm connection
+                normalizedLandmark = hand_landmarks.landmark[17]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Pinky_Mcp_x = pixelCoordinatesLandmark[0]
+                Pinky_Mcp_y = pixelCoordinatesLandmark[1]
+
+                # ------------------------------------------------------------------------------------------------------
+
+                #thumb second highest joint
+                normalizedLandmark = hand_landmarks.landmark[3]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Thumb_Ip_x = pixelCoordinatesLandmark[0]
+                Thumb_Ip_y = pixelCoordinatesLandmark[1]
+
+                #pointer finger tip
+                normalizedLandmark = hand_landmarks.landmark[8]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Index_Tip_x = pixelCoordinatesLandmark[0]
+                Index_Tip_y = pixelCoordinatesLandmark[1]
+
+                # middle finger tip
+                normalizedLandmark = hand_landmarks.landmark[12]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Middle_Tip_x = pixelCoordinatesLandmark[0]
+                Middle_Tip_y = pixelCoordinatesLandmark[1]
+
+                # ring finger tip
+                normalizedLandmark = hand_landmarks.landmark[16]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Ring_Tip_x = pixelCoordinatesLandmark[0]
+                Ring_Tip_y = pixelCoordinatesLandmark[1]
+
+                # pinky finger tip
+                normalizedLandmark = hand_landmarks.landmark[20]
+                pixelCoordinatesLandmark = mp_drawing._normalized_to_pixel_coordinates(normalizedLandmark.x,
+                                                                                       normalizedLandmark.y, imageWidth,
+                                                                                       imageHeight)
+                Pinky_Tip_x = pixelCoordinatesLandmark[0]
+                Pinky_Tip_y = pixelCoordinatesLandmark[1]
+
+                thmb_indx_diff = Thumb_Ip_x - Index_Mcp_x
+
+                #uses the y-coordinates of each landmark to determine which fingers are up
+                #does this by checking if the first joint of each finger is LOWER than the others
+
+                if Index_Pip_y < Middle_Tip_y and Index_Pip_y < Ring_Tip_y and Index_Pip_y < Pinky_Tip_y:
+                    if Index_Tip_y < Middle_Pip_y and Index_Tip_y < Ring_Pip_y and Index_Tip_y < Pinky_Pip_y:
+                        gesture = 'Gesture : One'
+
+                if Index_Pip_y < Ring_Tip_y and Index_Pip_y < Pinky_Tip_y:
+                    if Middle_Tip_y < Ring_Pip_y and Middle_Tip_y < Pinky_Pip_y:
+                        gesture = 'Gesture : Two'
+
+                if Index_Pip_y < Pinky_Tip_y and Middle_Pip_y < Pinky_Tip_y and Ring_Pip_y < Pinky_Tip_y:
+                    if Index_Pip_y < Thumb_Tip_y and Middle_Pip_y < Thumb_Tip_y and Ring_Pip_y < Thumb_Tip_y:
+                        if Index_Tip_y < Thumb_Tip_y and Middle_Tip_y < Thumb_Tip_y and Ring_Tip_y < Thumb_Tip_y:
+                            gesture = 'Gesture : Three'
+
+                if Index_Pip_y < Thumb_Tip_y and Middle_Pip_y < Thumb_Tip_y and Ring_Pip_y < Thumb_Tip_y:
+                    if Index_Tip_y < Index_Pip_y and Middle_Tip_y < Middle_Pip_y and Ring_Tip_y < Ring_Pip_y and Pinky_Tip_y < Pinky_Pip_y:
+                        gesture = 'Gesture : Four'
+
+                if thmb_indx_diff < -15:
+                    if Index_Tip_y < Index_Pip_y and Middle_Tip_y < Middle_Pip_y and Ring_Tip_y < Ring_Pip_y and Pinky_Tip_y < Pinky_Pip_y:
+                        gesture = 'Gesture : Five'
+
+        # using time library to print out the fps (gamer moment)
+        new_frame_time = time.time()
+        fps = 1 / (new_frame_time - prev_frame_time)
+        prev_frame_time = new_frame_time
+        fps2text = 'FPS : ' + str(int(fps))
+
+        # creating the output screen
+        cv2.rectangle(image, (5, 5), (320, 110), (0, 170, 240), -1)
+        cv2.putText(image, gesture, (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2)
+        cv2.putText(image, fps2text, (20, 90), cv2.FONT_HERSHEY_COMPLEX, 1, (3, 3, 138), 2)
+        cv2.imshow('Hand Detection', image)
+
+        #waiting for timeout
+        if cv2.waitKey(5) & 0xFF == 27:
+            break
+
+#end the video capture
+cap.release()
