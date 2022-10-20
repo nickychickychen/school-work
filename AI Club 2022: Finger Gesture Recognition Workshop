@@ -214,3 +214,4 @@ with mp_hands.Hands(
 
 #end the video capture
 cap.release()
+
