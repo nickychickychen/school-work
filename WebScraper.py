@@ -43,14 +43,4 @@ i+=1 #if i move the above chunk into the while just delete this
 
 
 
-#TODO: now it downloads a csv file that only works in google sheets (sad pog)
-
-#next step: do something with the data lol
-
-#idea: use some ML algo to give a prediction on whether or not a stock would rise
-# based on daily percent changes
-
-#idea extension: also could give a predicted date the stock would rise/fall based
-# on old data? this would use backtesting with the downloaded historical data
-
-#help plz wut am i doing    
+#TODO: now it downloads a csv file that only works in google sheets
